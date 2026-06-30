@@ -3,7 +3,6 @@ version: "3.8"
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: aip-postgres
     environment:
       POSTGRES_USER: aip
       POSTGRES_PASSWORD: aip
@@ -18,7 +17,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: aip-redis
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -29,7 +27,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: aip-backend
     env_file:
       - .env
     ports:
@@ -45,7 +42,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: aip-sync-worker
     env_file:
       - .env
     depends_on:
@@ -59,7 +55,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: aip-frontend
     ports:
       - "3005:3000"
     depends_on:
