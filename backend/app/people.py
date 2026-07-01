@@ -31,6 +31,10 @@ ALIASES: dict[str, str] = {
     "erika miranda": "Erika Miranda",
     "joao": "Joao",
     "joão": "Joao",
+    "anna laura marques": "Anna Laura",
+    "annacarvalho@hotmail.com": "Anna Laura",
+    "laura@cardosogestao.com.br": "Anna Laura",
+    "laura@dextro.com.br": "Anna Laura",
 }
 
 

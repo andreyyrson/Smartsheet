@@ -126,6 +126,9 @@ def get_dashboard_charts(
     date_to: date | None = None,
     session: Session = Depends(get_db),
 ) -> DashboardCharts:
+    today = date.today()
+    week_later = today + timedelta(days=7)
+
     def filtered(stmt):
         return apply_action_filters(
             stmt,
