@@ -138,16 +138,48 @@ def get_dashboard_charts(
             date_to=date_to,
         )
 
-    status_rows = session.execute(
+    # Calcular status baseados em lógica de negócio
+    completed = _count(session, filtered(select(func.count()).select_from(Action).where(Action.is_completed.is_(True))))
+    in_progress = _count(
+        session,
         filtered(
-            select(Action.status, func.count())
-            .select_from(Action)
-            .group_by(Action.status)
+            select(func.count()).select_from(Action)
+            .where(Action.is_completed.is_(False))
+            .where((Action.due_date.is_(None)) | (Action.due_date >= today))
         )
-    ).all()
+    )
+    delayed = _count(
+        session,
+        filtered(
+            select(func.count()).select_from(Action)
+            .where(Action.is_completed.is_(False))
+            .where(Action.due_date < today)
+        )
+    )
+    critical = _count(
+        session,
+        filtered(
+            select(func.count()).select_from(Action)
+            .where(Action.is_completed.is_(False))
+            .where((Action.due_date < today) | (Action.due_date <= week_later))
+        )
+    )
+    due_soon = _count(
+        session,
+        filtered(
+            select(func.count()).select_from(Action)
+            .where(Action.is_completed.is_(False))
+            .where(Action.due_date <= week_later)
+            .where(Action.due_date >= today)
+        )
+    )
+
     actions_by_status = [
-        ChartItem(label=s or "Sem status", value=c)
-        for s, c in sorted(status_rows, key=lambda r: r[1], reverse=True)
+        ChartItem(label="Concluído", value=completed),
+        ChartItem(label="Em andamento", value=in_progress),
+        ChartItem(label="Atraso", value=delayed),
+        ChartItem(label="Críticas", value=critical),
+        ChartItem(label="Vencendo", value=due_soon),
     ]
 
     project_rows = session.execute(
