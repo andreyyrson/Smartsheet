@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -82,7 +82,9 @@ def apply_action_filters(
     """Aplica os filtros comuns a uma query sobre Action.
 
     Quando `projeto` é um nome canônico, expande para todos os departments
-    brutos que mapeiam para ele."""
+    brutos que mapeiam para ele.
+
+    Quando `status` é um status calculado, aplica a lógica correspondente."""
     if projeto:
         if projeto in CANONICAL_PROJECTS:
             depts = departments_for_canonical(session, projeto)
@@ -92,7 +94,29 @@ def apply_action_filters(
         else:
             stmt = stmt.where(Action.department == projeto)
     if status:
-        stmt = stmt.where(Action.status.ilike(f"%{status}%"))
+        today = date.today()
+        week_later = today + timedelta(days=7)
+        if status == "Concluído" or status == "Concluido":
+            stmt = stmt.where(Action.is_completed.is_(True))
+        elif status == "Em andamento":
+            stmt = stmt.where(
+                Action.is_completed.is_(False)
+            ).where((Action.due_date.is_(None)) | (Action.due_date >= today))
+        elif status == "Atraso":
+            stmt = stmt.where(
+                Action.is_completed.is_(False)
+            ).where(Action.due_date < today)
+        elif status == "Críticas" or status == "Criticas":
+            stmt = stmt.where(
+                Action.is_completed.is_(False)
+            ).where(Action.due_date < today - timedelta(days=7))
+        elif status == "Vencendo":
+            stmt = stmt.where(
+                Action.is_completed.is_(False)
+            ).where(Action.due_date <= week_later).where(Action.due_date >= today)
+        else:
+            # Fallback para status brutos (caso não seja status calculado)
+            stmt = stmt.where(Action.status.ilike(f"%{status}%"))
     if date_from:
         stmt = stmt.where(Action.due_date >= date_from)
     if date_to:

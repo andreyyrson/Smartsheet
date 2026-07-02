@@ -4,11 +4,9 @@ export interface DashboardSummary {
   completed: number
   in_progress: number
   delayed: number
-  blocked: number
   critical: number
   completion_rate: number
   due_soon: number
-  overdue: number
 }
 
 export interface ChartItem {

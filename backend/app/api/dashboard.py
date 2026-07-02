@@ -8,6 +8,7 @@ from app.api._filters import apply_action_filters, project_consultor_analista
 from app.api._normalization import (
     CANONICAL_PROJECTS,
     aggregate_by_canonical,
+    normalize_project_name,
 )
 from app.database import get_db
 from app.models import Action
@@ -76,17 +77,11 @@ def get_dashboard_summary(
         session,
         base().where(Action.is_completed.is_(False)).where(Action.due_date < today),
     )
-    blocked = _count(
-        session,
-        base().where(
-            Action.status.ilike("%bloquead%") | Action.status.ilike("%blocked%")
-        ),
-    )
     critical = _count(
         session,
         base()
         .where(Action.is_completed.is_(False))
-        .where((Action.due_date < today) | (Action.due_date <= week_later)),
+        .where(Action.due_date < today - timedelta(days=7)),
     )
     due_soon = _count(
         session,
@@ -94,10 +89,6 @@ def get_dashboard_summary(
         .where(Action.is_completed.is_(False))
         .where(Action.due_date <= week_later)
         .where(Action.due_date >= today),
-    )
-    overdue = _count(
-        session,
-        base().where(Action.is_completed.is_(False)).where(Action.due_date < today),
     )
 
     completion_rate = round((completed / total * 100), 2) if total > 0 else 0.0
@@ -108,11 +99,9 @@ def get_dashboard_summary(
         completed=completed,
         in_progress=in_progress,
         delayed=delayed,
-        blocked=blocked,
         critical=critical,
         completion_rate=completion_rate,
         due_soon=due_soon,
-        overdue=overdue,
     )
 
 
@@ -164,7 +153,7 @@ def get_dashboard_charts(
         filtered(
             select(func.count()).select_from(Action)
             .where(Action.is_completed.is_(False))
-            .where((Action.due_date < today) | (Action.due_date <= week_later))
+            .where(Action.due_date < today - timedelta(days=7))
         )
     )
     due_soon = _count(
@@ -198,7 +187,6 @@ def get_dashboard_charts(
         for p, c in sorted(project_aggr.items(), key=lambda r: r[1], reverse=True)
     ]
 
-    today = date.today()
     in_progress_rows = session.execute(
         filtered(
             select(Action.department, func.count())
@@ -261,7 +249,14 @@ def get_dashboard_breakdown(
         )
     ).all()
 
-    result: list[BreakdownRow] = []
+    # Agregar por projeto canônico
+    project_totals: dict[str, int] = {}
+    project_completed: dict[str, int] = {}
+    project_in_progress: dict[str, int] = {}
+    project_overdue: dict[str, int] = {}
+    project_consultor: dict[str, str | None] = {}
+    project_analista: dict[str, str | None] = {}
+
     for department, total in rows:
         completed = _count(
             session,
@@ -284,12 +279,30 @@ def get_dashboard_breakdown(
             .where(Action.due_date < today),
         )
         cons, anal = proj_map.get(department, (None, None))
+        normalized_project = normalize_project_name(department) or department or "Sem projeto"
+
+        project_totals[normalized_project] = project_totals.get(normalized_project, 0) + total
+        project_completed[normalized_project] = project_completed.get(normalized_project, 0) + completed
+        project_in_progress[normalized_project] = project_in_progress.get(normalized_project, 0) + in_progress
+        project_overdue[normalized_project] = project_overdue.get(normalized_project, 0) + overdue
+        # Guardar o primeiro consultor/analista encontrado para o projeto canônico
+        if normalized_project not in project_consultor and cons:
+            project_consultor[normalized_project] = cons
+        if normalized_project not in project_analista and anal:
+            project_analista[normalized_project] = anal
+
+    result: list[BreakdownRow] = []
+    for project in project_totals:
+        total = project_totals[project]
+        completed = project_completed.get(project, 0)
+        in_progress = project_in_progress.get(project, 0)
+        overdue = project_overdue.get(project, 0)
         completion_rate = round((completed / total * 100), 2) if total > 0 else 0.0
         result.append(
             BreakdownRow(
-                project=department or "Sem projeto",
-                consultor=cons,
-                analista=anal,
+                project=project,
+                consultor=project_consultor.get(project),
+                analista=project_analista.get(project),
                 total=total,
                 completed=completed,
                 in_progress=in_progress,
@@ -306,16 +319,11 @@ def get_dashboard_breakdown(
 def get_filter_options(session: Session = Depends(get_db)) -> FilterOptions:
     # Retorna todos os nomes canônicos informados, independente de terem dados
     projetos = sorted(CANONICAL_PROJECTS)
-    status_list = [
-        s
-        for s in session.execute(
-            select(Action.status).where(Action.status.isnot(None)).distinct()
-        ).scalars()
-        if s
-    ]
+    # Status calculados usados no dashboard
+    status_list = ["Concluído", "Em andamento", "Atraso", "Críticas", "Vencendo"]
     return FilterOptions(
         projetos=sorted(projetos),
         consultores=list_estrategistas(),
         analistas=list_analistas(),
-        status=sorted(status_list),
+        status=status_list,
     )

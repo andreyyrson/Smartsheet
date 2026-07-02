@@ -15,8 +15,8 @@ function KpiCards({ data }: Props) {
     { label: 'Total de Ações', value: data?.total_actions ?? 0, color: '#6366F1' },
     { label: 'Concluídas', value: data?.completed ?? 0, color: '#22C55E' },
     { label: 'Em Andamento', value: data?.in_progress ?? 0, color: '#F59E0B' },
-    { label: 'Em Atraso', value: data?.overdue ?? 0, color: '#EF4444' },
-    { label: 'Críticas', value: data?.critical ?? 0, color: '#F97316' },
+    { label: 'Em Atraso', value: data?.delayed ?? 0, color: '#EF4444' },
+    { label: 'Críticas', value: data?.critical ?? 0, color: '#DC2626' },
     { label: 'Vencendo (7d)', value: data?.due_soon ?? 0, color: '#EAB308' },
     {
       label: 'Taxa de Conclusão',

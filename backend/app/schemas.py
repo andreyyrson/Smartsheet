@@ -38,11 +38,9 @@ class DashboardSummary(BaseModel):
     completed: int
     in_progress: int
     delayed: int
-    blocked: int
     critical: int
     completion_rate: float
     due_soon: int
-    overdue: int
 
 
 class ChartItem(BaseModel):
