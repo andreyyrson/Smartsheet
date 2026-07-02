@@ -42,6 +42,10 @@ function Dashboard() {
 
   const hasData = summary && summary.total_actions > 0
 
+  const handleProjectClick = (project: string) => {
+    setFilters({ ...filters, projeto: project })
+  }
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
@@ -71,7 +75,7 @@ function Dashboard() {
             }}
           >
             <PieChart title="Ações por Status" data={charts?.actions_by_status} delay={0.05} />
-            <BarCharts data={charts} />
+            <BarCharts data={charts} onProjectClick={handleProjectClick} />
           </Box>
           <SummaryTable rows={breakdown} />
         </>

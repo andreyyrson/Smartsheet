@@ -16,6 +16,7 @@ import { chartColors } from '../theme/colors'
 
 interface Props {
   data?: DashboardCharts
+  onProjectClick?: (project: string) => void
 }
 
 const MotionCard = motion(Card)
@@ -30,12 +31,14 @@ function ChartCard({
   color,
   delay,
   horizontal = false,
+  onProjectClick,
 }: {
   title: string
   data: { label: string; value: number }[]
   color: string
   delay: number
   horizontal?: boolean
+  onProjectClick?: (project: string) => void
 }) {
   const chartData = data.map((d) => ({ ...d, short: shorten(d.label, horizontal ? 24 : 18) }))
   return (
@@ -95,6 +98,8 @@ function ChartCard({
               fill={color}
               radius={horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]}
               animationDuration={700}
+              onClick={(data) => onProjectClick?.(data.label)}
+              cursor={onProjectClick ? 'pointer' : 'default'}
             >
               <LabelList dataKey="value" position={horizontal ? 'right' : 'top'} fill="#F8FAFC" fontSize={11} />
             </Bar>
@@ -109,10 +114,12 @@ function AlertChartCard({
   title,
   data,
   delay,
+  onProjectClick,
 }: {
   title: string
   data: { label: string; value: number }[]
   delay: number
+  onProjectClick?: (project: string) => void
 }) {
   const chartData = data.map((d) => ({ ...d, short: shorten(d.label, 24) }))
   return (
@@ -158,7 +165,14 @@ function AlertChartCard({
                 payload && payload.length ? payload[0].payload.label : ''
               }
             />
-            <Bar dataKey="value" fill="#EF4444" radius={[0, 4, 4, 0]} animationDuration={700}>
+            <Bar
+              dataKey="value"
+              fill="#EF4444"
+              radius={[0, 4, 4, 0]}
+              animationDuration={700}
+              onClick={(data) => onProjectClick?.(data.label)}
+              cursor={onProjectClick ? 'pointer' : 'default'}
+            >
               <LabelList dataKey="value" position="right" fill="#F8FAFC" fontSize={11} />
             </Bar>
           </BarChart>
@@ -168,7 +182,7 @@ function AlertChartCard({
   )
 }
 
-function BarCharts({ data }: Props) {
+function BarCharts({ data, onProjectClick }: Props) {
   return (
     <Box
       sx={{
@@ -184,6 +198,7 @@ function BarCharts({ data }: Props) {
         color={chartColors.primary}
         delay={0.05}
         horizontal
+        onProjectClick={onProjectClick}
       />
       <ChartCard
         title="Ações em Andamento por Projeto"
@@ -191,12 +206,14 @@ function BarCharts({ data }: Props) {
         color={chartColors.secondary}
         delay={0.1}
         horizontal
+        onProjectClick={onProjectClick}
       />
       <Box sx={{ gridColumn: { md: '1 / -1' } }}>
         <AlertChartCard
           title="Empresas com menos de 50 ações (atenção)"
           data={data?.small_projects_alert ?? []}
           delay={0.15}
+          onProjectClick={onProjectClick}
         />
       </Box>
     </Box>
