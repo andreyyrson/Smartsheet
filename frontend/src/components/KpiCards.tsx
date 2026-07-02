@@ -2,6 +2,7 @@ import { Box, Card, CardContent, Typography } from '@mui/material'
 import { motion } from 'framer-motion'
 
 import type { DashboardSummary } from '../types/dashboard'
+import { kpiColors } from '../theme/colors'
 
 interface Props {
   data?: DashboardSummary
@@ -11,17 +12,17 @@ const MotionCard = motion(Card)
 
 function KpiCards({ data }: Props) {
   const kpis = [
-    { label: 'Projetos', value: data?.total_projects ?? 0, color: '#3B82F6' },
-    { label: 'Total de Ações', value: data?.total_actions ?? 0, color: '#6366F1' },
-    { label: 'Concluídas', value: data?.completed ?? 0, color: '#22C55E' },
-    { label: 'Em Andamento', value: data?.in_progress ?? 0, color: '#F59E0B' },
-    { label: 'Em Atraso', value: data?.delayed ?? 0, color: '#EF4444' },
-    { label: 'Críticas', value: data?.critical ?? 0, color: '#DC2626' },
-    { label: 'Vencendo (7d)', value: data?.due_soon ?? 0, color: '#EAB308' },
+    { label: 'Projetos', value: data?.total_projects ?? 0, color: kpiColors.projects },
+    { label: 'Total de Ações', value: data?.total_actions ?? 0, color: kpiColors.totalActions },
+    { label: 'Concluídas', value: data?.completed ?? 0, color: kpiColors.completed },
+    { label: 'Em Andamento', value: data?.in_progress ?? 0, color: kpiColors.inProgress },
+    { label: 'Em Atraso', value: data?.delayed ?? 0, color: kpiColors.delayed },
+    { label: 'Críticas', value: data?.critical ?? 0, color: kpiColors.critical },
+    { label: 'Vencendo (7d)', value: data?.due_soon ?? 0, color: kpiColors.dueSoon },
     {
       label: 'Taxa de Conclusão',
       value: `${data?.completion_rate ?? 0}%`,
-      color: '#22C55E',
+      color: kpiColors.completionRate,
     },
   ]
 

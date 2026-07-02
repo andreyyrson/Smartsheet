@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Box, LinearProgress, Typography } from '@mui/material'
+import { Box, LinearProgress, Typography, Alert } from '@mui/material'
 
 import api from '../api/client'
 import BarCharts from '../components/BarCharts'
@@ -40,6 +40,8 @@ function Dashboard() {
     queryFn: async () => (await api.get('/dashboard/breakdown', { params })).data,
   })
 
+  const hasData = summary && summary.total_actions > 0
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
@@ -50,19 +52,30 @@ function Dashboard() {
       </Box>
 
       <FilterBar filters={filters} options={options} onChange={setFilters} />
-      <KpiCards data={summary} />
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-          gap: 3,
-          mb: 3,
-        }}
-      >
-        <PieChart title="Ações por Status" data={charts?.actions_by_status} delay={0.05} />
-        <BarCharts data={charts} />
-      </Box>
-      <SummaryTable rows={breakdown} />
+      
+      {!loadingSummary && !hasData && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Nenhum resultado encontrado para os filtros selecionados.
+        </Alert>
+      )}
+      
+      {hasData && (
+        <>
+          <KpiCards data={summary} />
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+              gap: 3,
+              mb: 3,
+            }}
+          >
+            <PieChart title="Ações por Status" data={charts?.actions_by_status} delay={0.05} />
+            <BarCharts data={charts} />
+          </Box>
+          <SummaryTable rows={breakdown} />
+        </>
+      )}
     </Box>
   )
 }

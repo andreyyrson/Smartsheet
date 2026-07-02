@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 
 import type { ChartItem } from '../types/dashboard'
+import { colorForStatus } from '../theme/colors'
 
 interface Props {
   title: string
@@ -18,19 +19,6 @@ interface Props {
 }
 
 const MotionCard = motion(Card)
-
-function colorForStatus(label: string): string {
-  const lower = label.toLowerCase()
-  if (lower.includes('atraso')) return '#EF4444' // vermelho
-  if (lower.includes('críticas') || lower.includes('criticas')) return '#DC2626' // vermelho escuro
-  if (lower.includes('concluído') || lower.includes('concluido')) return '#22C55E' // verde
-  if (lower.includes('em andamento')) return '#3B82F6' // azul
-  if (lower.includes('vencendo')) return '#F97316' // laranja
-  if (lower.includes('vence hoje')) return '#F97316' // laranja
-  if (lower.includes('aguardando')) return '#F59E0B' // amarelo
-  if (lower.includes('sem status') || lower.includes('invalid')) return '#64748B' // cinza
-  return '#3B82F6' // azul (padrão)
-}
 
 function PieChart({ title, data, delay = 0 }: Props) {
   const chartData = data ?? []

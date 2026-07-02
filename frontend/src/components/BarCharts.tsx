@@ -12,6 +12,7 @@ import {
 } from 'recharts'
 
 import type { DashboardCharts } from '../types/dashboard'
+import { chartColors } from '../theme/colors'
 
 interface Props {
   data?: DashboardCharts
@@ -94,7 +95,9 @@ function ChartCard({
               fill={color}
               radius={horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]}
               animationDuration={700}
-            />
+            >
+              <LabelList dataKey="value" position={horizontal ? 'right' : 'top'} fill="#F8FAFC" fontSize={11} />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
@@ -178,14 +181,14 @@ function BarCharts({ data }: Props) {
       <ChartCard
         title="Ações por Projeto"
         data={(data?.actions_by_project ?? []).slice(0, 12)}
-        color="#6366F1"
+        color={chartColors.primary}
         delay={0.05}
         horizontal
       />
       <ChartCard
         title="Ações em Andamento por Projeto"
         data={(data?.in_progress_by_project ?? []).slice(0, 12)}
-        color="#F59E0B"
+        color={chartColors.secondary}
         delay={0.1}
         horizontal
       />
