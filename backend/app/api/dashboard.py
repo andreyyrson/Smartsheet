@@ -54,7 +54,7 @@ def get_dashboard_summary(
         )
 
     project_stmt = apply_action_filters(
-        select(func.count(func.distinct(Action.department))).select_from(Action),
+        select(Action.department).select_from(Action).where(Action.department.isnot(None)).distinct(),
         session,
         projeto=projeto,
         consultor=consultor,
@@ -63,7 +63,13 @@ def get_dashboard_summary(
         date_from=date_from,
         date_to=date_to,
     )
-    total_projects = _count(session, project_stmt)
+    project_rows = session.execute(project_stmt).all()
+    canonical_projects = set()
+    for (dept,) in project_rows:
+        canonical = normalize_project_name(dept)
+        if canonical != "Outros":
+            canonical_projects.add(canonical)
+    total_projects = len(canonical_projects)
 
     total = _count(session, base())
     completed = _count(session, base().where(Action.is_completed.is_(True)))
@@ -185,6 +191,7 @@ def get_dashboard_charts(
     actions_by_project = [
         ChartItem(label=p, value=c)
         for p, c in sorted(project_aggr.items(), key=lambda r: r[1], reverse=True)
+        if p != "Outros"
     ]
 
     in_progress_rows = session.execute(
@@ -200,12 +207,13 @@ def get_dashboard_charts(
     in_progress_by_project = [
         ChartItem(label=p, value=c)
         for p, c in sorted(in_progress_aggr.items(), key=lambda r: r[1], reverse=True)
+        if p != "Outros"
     ]
 
     small_projects_alert = [
         ChartItem(label=p, value=c)
         for p, c in sorted(project_aggr.items(), key=lambda r: r[1])
-        if c < 50
+        if c < 50 and p != "Outros"
     ]
 
     return DashboardCharts(
@@ -293,6 +301,8 @@ def get_dashboard_breakdown(
 
     result: list[BreakdownRow] = []
     for project in project_totals:
+        if project == "Outros":
+            continue
         total = project_totals[project]
         completed = project_completed.get(project, 0)
         in_progress = project_in_progress.get(project, 0)
